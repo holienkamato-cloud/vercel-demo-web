@@ -1,1 +1,10 @@
 .vercel
+node_modules
+.next
+.env*.local
+.env.check
+supabase/.temp
+supabase/.branches
+
+.env*
+.claude

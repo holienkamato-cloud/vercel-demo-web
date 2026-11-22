@@ -17,7 +17,7 @@ export default async function LoginPage({ searchParams }) {
       <p className="lead">Prihlásenie bez hesla – pošleme vám odkaz na e-mail.</p>
       {error && (
         <p className="error" style={{ marginBottom: 16 }}>
-          Odkaz na prihlásenie je neplatný alebo vypršal. Vyžiadajte si nový.
+          Odkaz na prihlásenie je neplatný alebo už bol použitý. Vyžiadajte si nový.
         </p>
       )}
       <LoginForm />

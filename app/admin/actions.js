@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 const STATUSES = ["novy", "riesi_sa", "vybaveny"];
@@ -20,18 +21,24 @@ export async function sendMagicLink(_prevState, formData) {
     return { error: "Zadajte platný e-mail." };
   }
 
-  const supabase = await createClient();
+  // Implicitný flow: odkaz z e-mailu prihlási v akomkoľvek prehliadači
+  // (nezávisí od cookie, ktoré by sa uložilo len v prehliadači, kde sa odkaz vyžiadal).
+  const supabase = createPlainClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    { auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false } }
+  );
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
       shouldCreateUser: false,
-      emailRedirectTo: `${await siteOrigin()}/auth/callback?next=/admin`,
+      emailRedirectTo: `${await siteOrigin()}/auth/confirm`,
     },
   });
 
   // Rovnaká odpoveď pre existujúci aj neexistujúci účet – neprezrádzame, kto je admin.
   if (error && error.status === 429) {
-    return { error: "Príliš veľa pokusov. Skúste to znova o pár minút." };
+    return { error: "Príliš veľa pokusov. Nový odkaz si môžete vyžiadať o pár minút." };
   }
   return { sent: true, email };
 }

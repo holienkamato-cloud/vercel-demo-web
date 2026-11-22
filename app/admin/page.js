@@ -87,7 +87,8 @@ export default async function AdminPage({ searchParams }) {
           </p>
           <p className="inq-msg">{q.message}</p>
           <div className="inq-actions">
-            <form action={updateInquiry} style={{ flex: 1 }}>
+            {/* key: po uložení sa formulár znovu vykreslí s novými hodnotami */}
+            <form key={`${q.status}|${q.note ?? ""}`} action={updateInquiry} style={{ flex: 1 }}>
               <input type="hidden" name="id" value={q.id} />
               <select name="status" defaultValue={q.status} aria-label="Stav">
                 {Object.entries(STATUS_LABELS).map(([k, label]) => (

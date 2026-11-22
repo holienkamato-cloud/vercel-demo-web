@@ -10,9 +10,12 @@ export default function LoginForm() {
     return (
       <div className="notice" role="status">
         <h2>Skontrolujte si e-mail</h2>
-        <p style={{ margin: 0 }}>
-          Ak je {state.email} administrátorský účet, prišiel naň odkaz na prihlásenie.
-          Otvorte ho v tomto prehliadači.
+        <p style={{ margin: "0 0 8px" }}>
+          Ak je {state.email} administrátorský účet, prišiel naň e-mail „Your sign-in link“.
+          Kliknite v ňom na <strong>Sign in</strong>.
+        </p>
+        <p className="muted" style={{ margin: 0 }}>
+          Platí vždy len najnovší odkaz a dá sa použiť iba raz. E-mail môže byť aj v spame.
         </p>
       </div>
     );

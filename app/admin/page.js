@@ -57,7 +57,10 @@ export default async function AdminPage({ searchParams }) {
             {newCount ?? 0} {newCount === 1 ? "nový dopyt" : newCount >= 2 && newCount <= 4 ? "nové dopyty" : "nových dopytov"} · prihlásený {user.email}
           </p>
         </div>
-        <form action={signOut}><button className="btn-ghost btn-small">Odhlásiť sa</button></form>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Link href="/admin/heslo" className="btn btn-ghost btn-small">Zmeniť heslo</Link>
+          <form action={signOut}><button className="btn-ghost btn-small">Odhlásiť sa</button></form>
+        </div>
       </div>
 
       <nav className="filters" aria-label="Filter podľa stavu">

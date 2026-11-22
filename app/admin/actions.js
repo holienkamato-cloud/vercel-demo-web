@@ -1,46 +1,44 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 const STATUSES = ["novy", "riesi_sa", "vybaveny"];
 
-async function siteOrigin() {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
+export async function signIn(_prevState, formData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  if (!email || !password) {
+    return { error: "Zadajte e-mail aj heslo.", email };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    if (error.status === 429) {
+      return { error: "Príliš veľa pokusov. Skúste to znova o minútu.", email };
+    }
+    return { error: "Nesprávny e-mail alebo heslo.", email };
+  }
+  redirect("/admin");
 }
 
-export async function sendMagicLink(_prevState, formData) {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return { error: "Zadajte platný e-mail." };
-  }
+export async function changePassword(_prevState, formData) {
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  if (password.length < 12) return { error: "Heslo musí mať aspoň 12 znakov." };
+  if (password !== confirm) return { error: "Heslá sa nezhodujú." };
 
-  // Implicitný flow: odkaz z e-mailu prihlási v akomkoľvek prehliadači
-  // (nezávisí od cookie, ktoré by sa uložilo len v prehliadači, kde sa odkaz vyžiadal).
-  const supabase = createPlainClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-    { auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false } }
-  );
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: false,
-      emailRedirectTo: `${await siteOrigin()}/auth/confirm`,
-    },
-  });
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/admin/login");
 
-  // Rovnaká odpoveď pre existujúci aj neexistujúci účet – neprezrádzame, kto je admin.
-  if (error && error.status === 429) {
-    return { error: "Príliš veľa pokusov. Nový odkaz si môžete vyžiadať o pár minút." };
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    return { error: error.code === "same_password" ? "Nové heslo je rovnaké ako staré." : "Heslo sa nepodarilo zmeniť: " + error.message };
   }
-  return { sent: true, email };
+  return { ok: true };
 }
 
 export async function updateInquiry(formData) {
